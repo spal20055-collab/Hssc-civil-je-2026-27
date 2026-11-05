@@ -1,10 +1,11 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HSSC JE Admin</title><link rel="stylesheet" href="/style.css"></head>
 <body><header><div><b>HSSC CIVIL JE 2026-27</b><small>ADMIN CONTROL PANEL</small></div><span>ADMIN</span></header>
-<main><section class="card"><h1>Admin Dashboard</h1><p class="muted">Create 50-question mocks, import CSV, publish tests and view student results.</p>
+<main><section class="card"><h1>Admin Dashboard</h1><p class="muted">Create 25, 50 or 100-question mocks; choose duration, import CSV, publish or delete drafts.</p>
 <label>Admin key <input id="key" type="password" placeholder="Enter ADMIN_KEY"></label><button id="connect">Connect dashboard</button><p id="status" class="muted"></p></section>
 <section id="dash" class="hide"><div class="stats" id="stats"></div>
-<div class="card"><h2>Create a new mock</h2><div class="fields"><label>Mock title<input id="title" value="HSSC JE Civil Mock 01"></label><label>Duration (minutes)<input id="duration" type="number" value="90"></label></div><label>Description<input id="description" value="50-question Civil Engineering practice examination"></label>
-<div class="import"><h3>Import questions from CSV</h3><p class="muted">Use the downloadable template. Exactly 50 valid questions are required.</p><button class="light" id="template">Download CSV template</button><input type="file" id="csv" accept=".csv,text/csv"></div>
+<div class="card"><h2>Create a new mock</h2><div class="fields"><label>Mock title<input id="title" value="HSSC JE Civil Mock 01"></label><label>Duration<select id="duration"><option value="25">25 minutes</option><option value="50">50 minutes</option><option value="90" selected>90 minutes</option></select></label>
+<label>Number of questions<select id="questionCount"><option value="25">25 questions</option><option value="50" selected>50 questions</option><option value="100">100 questions</option></select></label></div><label>Description<input id="description" value="Civil Engineering practice examination"></label>
+<div class="import"><h3>Import questions from CSV</h3><p class="muted">Use the downloadable template. Select 25, 50 or 100 questions; CSV must match your selection exactly.</p><button class="light" id="template">Download CSV template</button><input type="file" id="csv" accept=".csv,text/csv"></div>
 <div id="preview" class="muted">No questions imported yet.</div><button id="create" disabled>Create draft mock</button><p id="createStatus" class="muted"></p></div>
 <div class="card"><h2>Mock tests</h2><div id="mockList"></div></div>
 <div class="card"><h2>Student results</h2><select id="resultExam"><option value="">Select a mock</option></select><div id="results"></div></div></section></main>
