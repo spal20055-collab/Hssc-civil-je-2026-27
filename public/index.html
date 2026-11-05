@@ -1,0 +1,68 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HSSC CIVIL JE 2026-27</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+<div><b>HSSC CIVIL JE 2026-27</b><small>ONLINE CBT MOCK TEST SERIES</small></div>
+<span>TELEGRAM STUDENT PORTAL</span>
+</header>
+<main>
+<section id="home" class="card">
+<h1>Welcome to HSSC Civil JE</h1>
+<p class="muted">50-question practice mocks • 90 minutes • No negative marking</p>
+<p id="student">Connecting to Telegram…</p>
+<div id="exams"></div>
+</section>
+<section id="instructions" class="card hide">
+<h2 id="mockTitle"></h2><p id="mockDesc"></p>
+<ul>
+<li>50 multiple-choice questions</li>
+<li>90 minutes (or as specified)</li>
+<li>No negative marking</li>
+<li>One submission per Telegram account</li>
+<li>Timer auto-submits the exam</li>
+</ul>
+<button id="begin">Start examination</button>
+</section>
+<section id="exam" class="card hide">
+<div class="top">
+<div><b id="examTitle"></b><small id="progress"></small></div>
+<strong id="timer">90:00</strong>
+</div>
+<div class="examgrid">
+<article>
+<small id="qno"></small>
+<h2 id="question"></h2>
+<div id="choices"></div>
+<div class="nav">
+<button class="light" id="prev">Previous</button>
+<button id="next">Save & Next</button>
+</div>
+</article>
+<aside>
+<b>Question Palette</b>
+<div id="palette"></div>
+<small>Green: answered</small>
+<button class="red" id="submit">Submit test</button>
+</aside>
+</div>
+</section>
+<section id="result" class="card hide">
+<h1>Examination Result</h1>
+<div id="score"></div>
+<button id="showRank">View channel leaderboard</button>
+<div id="rankList"></div>
+<button class="light" id="back">Back to mocks</button>
+</section>
+</main>
+<footer>HSSC CIVIL JE 2026-27 • Powered by your mock test series</footer>
+<script src="/student.js"></script>
+</body>
+</html>
