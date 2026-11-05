@@ -128,7 +128,9 @@ app.get("/api/admin/exams",adminAuth,(req,res)=>res.json(db.prepare(`SELECT e.*,
 app.post("/api/admin/exams",adminAuth,(req,res)=>{
  try{
   const {title,description="",durationMinutes=90,questions=[]}=req.body;
-  if(!title||!Array.isArray(questions)||questions.length!==50)throw new Error("A mock must contain exactly 50 questions.");
+  const allowedCounts=[25,50,100], allowedDurations=[25,50,90];
+  if(!title||!Array.isArray(questions)||!allowedCounts.includes(questions.length))throw new Error("A mock must contain exactly 25, 50 or 100 questions.");
+  if(!allowedDurations.includes(Number(durationMinutes)))throw new Error("Duration must be 25, 50 or 90 minutes.");
   const total=questions.reduce((s,q)=>s+Number(q.marks||1),0);
   const create=db.transaction(()=>{
    const info=db.prepare("INSERT INTO exams(title,description,duration_minutes,total_marks,published) VALUES(?,?,?,?,0)")
@@ -141,12 +143,25 @@ app.post("/api/admin/exams",adminAuth,(req,res)=>{
 });
 app.post("/api/admin/exams/:id/publish",adminAuth,(req,res)=>{
  const count=db.prepare("SELECT COUNT(*) n FROM questions WHERE exam_id=?").get(req.params.id).n;
- if(count!==50)return res.status(400).json({error:"Only a 50-question mock can be published."});
+ if(![25,50,100].includes(count))return res.status(400).json({error:"Only 25, 50 or 100-question mocks can be published."});
  const r=db.prepare("UPDATE exams SET published=1 WHERE id=?").run(req.params.id);
  res.json({published:r.changes>0});
 });
 app.post("/api/admin/exams/:id/unpublish",adminAuth,(req,res)=>{
  const r=db.prepare("UPDATE exams SET published=0 WHERE id=?").run(req.params.id);res.json({published:false,updated:r.changes>0});
+});
+app.delete("/api/admin/exams/:id",adminAuth,(req,res)=>{
+ const exam=db.prepare("SELECT id,published FROM exams WHERE id=?").get(req.params.id);
+ if(!exam)return res.status(404).json({error:"Mock not found."});
+ if(exam.published)return res.status(400).json({error:"Unpublish this mock before deleting it."});
+ const attempts=db.prepare("SELECT COUNT(*) n FROM attempts WHERE exam_id=?").get(req.params.id).n;
+ if(attempts>0)return res.status(400).json({error:"This mock has student attempts/results and cannot be deleted."});
+ const remove=db.transaction(()=>{
+  db.prepare("DELETE FROM questions WHERE exam_id=?").run(req.params.id);
+  db.prepare("DELETE FROM exams WHERE id=?").run(req.params.id);
+ });
+ remove();
+ res.json({deleted:true});
 });
 app.get("/api/admin/exams/:id/results",adminAuth,(req,res)=>res.json(db.prepare(`SELECT s.first_name,s.username,a.score,a.correct_count,a.incorrect_count,a.unanswered_count,a.submitted_at
  FROM attempts a JOIN students s ON s.telegram_id=a.telegram_id WHERE a.exam_id=?
