@@ -1,41 +1,45 @@
-HSSC CIVIL JE 2026-27 — WEBSITE UPDATE PACKAGE v4
+HSSC CIVIL JE 2026-27 — SUPABASE POSTGRESQL UPDATE (PRE-DEPLOY TEST PACKAGE)
 
-Files included:
-- server.js
-- package.json
-- public/index.html
-- public/style.css
-- public/student.js
-- public/admin.html
-- public/admin.js
+This package replaces the previous local SQLite database with Supabase PostgreSQL.
+It preserves the existing student CBT frontend and admin UI.
 
-IMPORTANT BEFORE DEPLOYING
-1. Make a backup of the current GitHub repository and current Render environment variables.
-2. Do NOT delete or change BOT_TOKEN, TELEGRAM_CHANNEL_ID, or ADMIN_KEY in Render Environment.
-3. Replace/add the files in GitHub while keeping any existing unrelated files (for example bot files or configuration files) unless you know they are no longer used.
-4. The server migrates the existing attempts table to allow two attempts and keeps already submitted attempt rows. However, Render Free local SQLite storage may be ephemeral. Download/backup the database if you have access to it before redeploying; a code update cannot guarantee recovery of data already lost on a free ephemeral filesystem.
-5. Keep ADMIN_KEY and BOT_TOKEN private. Never put secrets in GitHub.
-6. After deploy, test first with a draft/test mock before publishing to students.
-7. package.json pins Node to 22.x to avoid native better-sqlite3 ABI mismatch seen on the previous deployment.
+FEATURES PRESERVED IN SERVER
+- Two submitted attempts per student per mock; active attempt can resume.
+- Each submitted attempt has its own result and Review Solutions.
+- Leaderboard contains one row per student, using their best score; ties prefer faster time.
+- Server-side timer validation and autosave.
+- Admin create/publish/unpublish/delete-draft/results/summary.
+- JSON database backup download from Admin.
+- Existing mobile CBT layout, question palette and result chart are retained in public files.
 
-FEATURES IN THIS UPDATE
-- Admin can create 25/50/100-question mocks.
-- Mock duration choices: 25/50/90 minutes.
-- Student must choose exactly one category: GEN, EWS, BCA, BCB, OSC, DSC.
-- Up to two submitted attempts per student per mock.
-- Server-side attempt start time and countdown based on configured duration.
-- Auto-submit when timer expires.
-- CBT question palette, previous/next, answered state and mark-for-review.
-- Progress autosave while a test is active; refresh can resume the active attempt.
-- Result analysis: correct, incorrect, unattempted, accuracy, rank, category, time taken.
-- Review Solutions: selected answer, correct answer, status and admin explanation.
-- Leaderboard shows one row per student using their best score; ties prefer faster time.
-- Student attempt history shows both attempts with separate Review Solutions.
-- Result page includes a colour-coded performance chart: Correct green, Incorrect red, Unattempted brown, Time blue, Accuracy yellow.
-- Admin dashboard controls are aligned and responsive on mobile; draft delete control is included.
-- Mobile CBT layout places the question above the question palette.
+IMPORTANT: NOT YET DEPLOYED OR CONNECTED
+This is a code package only. It has not been connected to your Supabase project or deployed to Render.
+Do not replace the live Render app until the staged checks are completed.
 
-LIMITATIONS / TEST NOTES
-- Existing legacy attempts are preserved and counted as attempt 1; their category is shown as Legacy/blank and old time taken is 0 because the old version did not save those values.
-- Subject-wise analysis is not included because the existing CSV/database format does not contain a subject field. Add subject metadata in a future update if subject-wise breakdown is required.
-- A student can change category on a second attempt; each attempt stores its own category.
+FILES
+- server.js: PostgreSQL version of API server.
+- package.json: uses pg instead of better-sqlite3.
+- supabase_schema.sql: schema for Supabase SQL Editor.
+- public/: existing student/admin frontend from the current update package.
+
+NEXT STEPS (do one at a time)
+1. Create a fresh backup of any database data you can still access. Render Free SQLite may already have lost data after restarts; this package cannot recover lost records.
+2. In Supabase SQL Editor, run supabase_schema.sql once. The server also creates/updates these tables on startup, but the SQL file is provided for review and manual setup.
+3. In Render, add DATABASE_URL using Supabase's PostgreSQL connection string (prefer Session Pooler if direct IPv6 connectivity is unavailable). Keep the value private. Add DATABASE_SSL=true if needed.
+4. Keep BOT_TOKEN, TELEGRAM_CHANNEL_ID and ADMIN_KEY unchanged in Render. Never place secrets in GitHub.
+5. Deploy to a separate Render test service/branch first. Verify /api/health reports database=postgresql, then test one unpublished test mock, two attempts, separate reviews, leaderboard best score, admin backup and delete restrictions.
+6. Only after all tests pass should the production service be updated.
+
+ENVIRONMENT VARIABLES
+DATABASE_URL=<Supabase PostgreSQL connection string; keep secret>
+DATABASE_SSL=true
+BOT_TOKEN=<existing Telegram bot token>
+TELEGRAM_CHANNEL_ID=<existing channel ID>
+ADMIN_KEY=<existing admin key>
+PORT is supplied by Render.
+
+DATA MIGRATION NOTE
+The Supabase project currently had no tables and no confirmed export/import of existing SQLite data. This code does not automatically copy records from the old SQLite file. If the old database file is available, export/import must be performed separately before switching production traffic. Do not assume old mocks/results are present in Supabase.
+
+SAFETY
+Do not commit .env files, Supabase passwords, Telegram bot tokens, or Admin keys. Do not share the DATABASE_URL in chat or screenshots.
