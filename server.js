@@ -147,7 +147,7 @@ app.get("/api/exams/:id/result",studentAuth,(req,res)=>{
  const sid=String(req.student.id),attemptId=Number(req.query.attemptId||0);
  const a=attemptId?db.prepare("SELECT * FROM attempts WHERE id=? AND exam_id=? AND telegram_id=? AND status='submitted'").get(attemptId,req.params.id,sid):db.prepare("SELECT * FROM attempts WHERE exam_id=? AND telegram_id=? AND status='submitted' ORDER BY attempt_number DESC LIMIT 1").get(req.params.id,sid);
  if(!a)return res.status(404).json({error:"Result not found"});
- const rank=db.prepare(`SELECT COUNT(*)+1 rank FROM attempts WHERE exam_id=? AND status='submitted' AND (score>? OR (score=? AND submitted_at<?))`).get(req.params.id,a.score,a.score,a.submitted_at).rank;
+ const rank=db.prepare(`WITH best AS (SELECT telegram_id,score,time_taken_seconds,submitted_at,ROW_NUMBER() OVER(PARTITION BY telegram_id ORDER BY score DESC,time_taken_seconds ASC,submitted_at ASC) rn FROM attempts WHERE exam_id=? AND status='submitted') SELECT COUNT(*)+1 rank FROM best WHERE rn=1 AND (score>? OR (score=? AND time_taken_seconds<?) OR (score=? AND time_taken_seconds=? AND submitted_at<?))`).get(req.params.id,a.score,a.score,a.time_taken_seconds,a.score,a.time_taken_seconds,a.submitted_at).rank;
  const total=db.prepare("SELECT COUNT(*) n FROM questions WHERE exam_id=?").get(req.params.id).n;
  res.json({attemptId:a.id,attemptNumber:a.attempt_number,category:a.category,score:a.score,totalMarks:db.prepare("SELECT total_marks FROM exams WHERE id=?").get(req.params.id).total_marks,correct:a.correct_count,incorrect:a.incorrect_count,unanswered:a.unanswered_count,totalQuestions:total,accuracy:total?Math.round(a.correct_count/total*1000)/10:0,rank,timeTakenSeconds:a.time_taken_seconds,timeRemainingSeconds:Math.max(0,db.prepare("SELECT duration_minutes FROM exams WHERE id=?").get(req.params.id).duration_minutes*60-a.time_taken_seconds),submittedAt:a.submitted_at,attemptsUsed:db.prepare("SELECT COUNT(*) n FROM attempts WHERE exam_id=? AND telegram_id=? AND status='submitted'").get(req.params.id,sid).n});
 });
@@ -156,8 +156,18 @@ app.get("/api/attempts/:attemptId/review",studentAuth,(req,res)=>{
  const qs=db.prepare("SELECT id,question,options,correct_index,explanation,marks FROM questions WHERE exam_id=? ORDER BY id").all(a.exam_id).map(q=>{const selected=JSON.parse(a.answers||'{}')[String(q.id)];return {...q,options:JSON.parse(q.options),selectedAnswer:selected===undefined?null:Number(selected),correct:selected!==undefined&&Number(selected)===q.correct_index,status:selected===undefined?"Unattempted":Number(selected)===q.correct_index?"Correct":"Incorrect"}});
  res.json({attemptId:a.id,attemptNumber:a.attempt_number,category:a.category,questions:qs});
 });
+app.get("/api/exams/:id/attempt-history",studentAuth,(req,res)=>{
+ const rows=db.prepare(`SELECT id attempt_id,attempt_number,category,score,correct_count,incorrect_count,unanswered_count,time_taken_seconds,submitted_at FROM attempts WHERE exam_id=? AND telegram_id=? AND status='submitted' ORDER BY attempt_number ASC`).all(req.params.id,String(req.student.id));
+ res.json(rows);
+});
 app.get("/api/exams/:id/leaderboard",studentAuth,(req,res)=>{
- const rows=db.prepare(`SELECT a.score,a.correct_count,a.incorrect_count,a.unanswered_count,a.time_taken_seconds,a.category,s.first_name,a.submitted_at FROM attempts a JOIN students s ON s.telegram_id=a.telegram_id WHERE a.exam_id=? AND a.status='submitted' ORDER BY a.score DESC,a.submitted_at ASC LIMIT 100`).all(req.params.id);
+ // One row per student: keep the best score; on equal scores prefer the faster attempt.
+ const rows=db.prepare(`WITH ranked AS (
+  SELECT a.score,a.correct_count,a.incorrect_count,a.unanswered_count,a.time_taken_seconds,a.category,s.first_name,a.submitted_at,
+   ROW_NUMBER() OVER(PARTITION BY a.telegram_id ORDER BY a.score DESC,a.time_taken_seconds ASC,a.submitted_at ASC) rn
+  FROM attempts a JOIN students s ON s.telegram_id=a.telegram_id
+  WHERE a.exam_id=? AND a.status='submitted'
+ ) SELECT * FROM ranked WHERE rn=1 ORDER BY score DESC,time_taken_seconds ASC,submitted_at ASC LIMIT 100`).all(req.params.id);
  res.json(rows.map((r,i)=>({...r,rank:i+1})));
 });
 
