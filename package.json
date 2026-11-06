@@ -1,9 +1,14 @@
 {
-  "name": "hssc-civil-je-2026-27",
-  "version": "2.0.0",
+  "name": "hssc-civil-je-mock-portal",
+  "version": "3.0.0",
   "private": true,
-  "description": "Telegram-first HSSC Civil JE CBT mock platform",
+  "description": "HSSC Civil JE Telegram Web App mock test portal",
   "main": "server.js",
-  "scripts": { "start": "node server.js", "dev": "node --watch server.js" },
-  "dependencies": { "better-sqlite3": "^11.8.1", "dotenv": "^16.4.7", "express": "^4.21.2" }
+  "scripts": {"start": "node server.js"},
+  "engines": {"node": ">=18"},
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
 }
