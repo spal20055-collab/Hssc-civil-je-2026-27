@@ -3,6 +3,8 @@ const express = require("express");
 const crypto = require("crypto");
 const Database = require("better-sqlite3");
 const path = require("path");
+const fs = require("fs");
+const os = require("os");
 
 const app = express();
 const db = new Database(process.env.DB_PATH || "hssc-civil-je.db");
@@ -173,6 +175,19 @@ app.get("/api/exams/:id/leaderboard",studentAuth,(req,res)=>{
 
 // Admin APIs
 app.get("/api/admin/summary",adminAuth,(req,res)=>res.json({exams:db.prepare("SELECT COUNT(*) n FROM exams").get().n,published:db.prepare("SELECT COUNT(*) n FROM exams WHERE published=1").get().n,students:db.prepare("SELECT COUNT(*) n FROM students").get().n,attempts:db.prepare("SELECT COUNT(*) n FROM attempts WHERE status='submitted'").get().n}));
+// Download a consistent SQLite snapshot for off-site backup. This does not make
+// Render's local filesystem persistent; admins must download backups regularly.
+app.get("/api/admin/backup",adminAuth,async(req,res)=>{
+ const dir=await fs.promises.mkdtemp(path.join(os.tmpdir(),"hssc-backup-"));
+ const file=path.join(dir,"hssc-civil-je-backup.sqlite");
+ try{
+  await db.backup(file);
+  res.download(file,`hssc-civil-je-backup-${new Date().toISOString().slice(0,10)}.sqlite`,async err=>{
+   await fs.promises.rm(dir,{recursive:true,force:true}).catch(()=>{});
+   if(err && !res.headersSent) res.status(500).end("Backup download failed.");
+  });
+ }catch(e){await fs.promises.rm(dir,{recursive:true,force:true}).catch(()=>{});res.status(500).json({error:"Could not create database backup."});}
+});
 app.get("/api/admin/exams",adminAuth,(req,res)=>res.json(db.prepare(`SELECT e.*,COUNT(DISTINCT q.id) question_count,COUNT(DISTINCT CASE WHEN a.status='submitted' THEN a.id END) attempts FROM exams e LEFT JOIN questions q ON q.exam_id=e.id LEFT JOIN attempts a ON a.exam_id=e.id GROUP BY e.id ORDER BY e.id DESC`).all()));
 app.post("/api/admin/exams",adminAuth,(req,res)=>{
  try{const {title,description="",durationMinutes=90,questions=[]}=req.body;const allowedCounts=[25,50,100],allowedDurations=[25,50,90];if(!title||!Array.isArray(questions)||!allowedCounts.includes(questions.length))throw new Error("A mock must contain exactly 25, 50 or 100 questions.");if(!allowedDurations.includes(Number(durationMinutes)))throw new Error("Duration must be 25, 50 or 90 minutes.");
