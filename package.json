@@ -5,7 +5,7 @@
   "description": "HSSC Civil JE Telegram Web App mock test portal",
   "main": "server.js",
   "scripts": {"start": "node server.js"},
-  "engines": {"node": ">=18"},
+  "engines": {"node": "22.x"},
   "dependencies": {
     "better-sqlite3": "^11.7.0",
     "dotenv": "^16.4.7",
