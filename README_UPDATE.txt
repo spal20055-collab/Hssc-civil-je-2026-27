@@ -1,4 +1,4 @@
-HSSC CIVIL JE 2026-27 — WEBSITE UPDATE PACKAGE
+HSSC CIVIL JE 2026-27 — WEBSITE UPDATE PACKAGE v4
 
 Files included:
 - server.js
@@ -16,6 +16,7 @@ IMPORTANT BEFORE DEPLOYING
 4. The server migrates the existing attempts table to allow two attempts and keeps already submitted attempt rows. However, Render Free local SQLite storage may be ephemeral. Download/backup the database if you have access to it before redeploying; a code update cannot guarantee recovery of data already lost on a free ephemeral filesystem.
 5. Keep ADMIN_KEY and BOT_TOKEN private. Never put secrets in GitHub.
 6. After deploy, test first with a draft/test mock before publishing to students.
+7. package.json pins Node to 22.x to avoid native better-sqlite3 ABI mismatch seen on the previous deployment.
 
 FEATURES IN THIS UPDATE
 - Admin can create 25/50/100-question mocks.
@@ -28,7 +29,11 @@ FEATURES IN THIS UPDATE
 - Progress autosave while a test is active; refresh can resume the active attempt.
 - Result analysis: correct, incorrect, unattempted, accuracy, rank, category, time taken.
 - Review Solutions: selected answer, correct answer, status and admin explanation.
-- Leaderboard and admin result rows include attempt/category/time.
+- Leaderboard shows one row per student using their best score; ties prefer faster time.
+- Student attempt history shows both attempts with separate Review Solutions.
+- Result page includes a colour-coded performance chart: Correct green, Incorrect red, Unattempted brown, Time blue, Accuracy yellow.
+- Admin dashboard controls are aligned and responsive on mobile; draft delete control is included.
+- Mobile CBT layout places the question above the question palette.
 
 LIMITATIONS / TEST NOTES
 - Existing legacy attempts are preserved and counted as attempt 1; their category is shown as Legacy/blank and old time taken is 0 because the old version did not save those values.
